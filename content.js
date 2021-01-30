@@ -1,3 +1,11 @@
+const RADIO_TYPE = 1;
+const CONNECTPAIRS_TYPE = 7;
+const TEXT_TYPE = 6;
+const ORDER_TYPE = 9;
+const CHECKS_TYPE = 2;
+const SELECT_TYPE = 8;
+
+
 window.onload = function() {
     chrome.runtime.onMessage.addListener(function(req, _, sendResponse) {
 		if (req.action == "create") {
@@ -19,53 +27,32 @@ function createFile(sendResponse) {
 		for (let i=0; i<questions.length; i++) {
 			let question = questions[i];
 			let hint = question.querySelector(".hint");
-			let type = "";
+			let type = question.dataset.type;
 			let isCorrect = question.classList.contains("correct");
-			switch (hint.textContent) {
-				case "Выберите один правильный ответ":
-					type="radio";
-					break;
-				case "Введите ответ в виде текста (регистр не учитывается)":
-				case "Введите на месте пропуска текст (регистр не учитывается)":
-					type = "text";
-					break;
-				case "Соедините элементы попарно (неверно соединенную пару можно разбить, щелкнув на крестик)":
-					type = "connectPairs";
-					break;
-				case "Выберите один или несколько правильных ответов":
-					type="checks";
-					break;
-				case "Выберите из выпадающего списка правильный ответ":
-					type="select";
-					break;
-				case "Расставьте в правильном порядке":
-					type="order";
-					break;
-			}
 			res["questions"][i] = {};
 			res["questions"][i]["title"] = question.querySelector(".question-description p").textContent;
 			res["questions"][i]["type"] = type;
 			res["questions"][i]["isCorrect"] = isCorrect;
+			res["questions"][i]["id"] = question.dataset.id;
 			let answer;
 			switch (type) {
-				case "radio":
+				case RADIO_TYPE:
 					let choosenLabel = question.querySelector("label.checked");
-					let choosenRadioOuterHtml = choosenLabel.querySelector("input").outerHTML;
-					answer = choosenLabel.innerHTML.replace(choosenRadioOuterHtml, "").trim();
+					answer = choosenLabel.querySelector("input").value;
 					break;
-				case "text":
+				case TEXT_TYPE:
 					let response = question.querySelector(".response input");
 					answer = response.value;
 					break;
-				case "connectPairs":
+				case CONNECTPAIRS_TYPE:
 					answer = {};
 					let pairs = question.querySelectorAll(".qt_connect_group");
 					for (pair of pairs) {
 						let items = pair.querySelectorAll(".qt_connect_item");
-						answer[items[0].innerHTML.trim()] = items[1].innerHTML.trim();
+						answer[items[0].id] = items[1].id;
 					}
 					break;
-				case "checks":
+				case CHECKS_TYPE:
 					answer = [];
 					let labels = question.querySelectorAll("label");
 					for (let label of labels) {
@@ -75,11 +62,11 @@ function createFile(sendResponse) {
 						}
 					}
 					break;
-				case "select":
+				case SELECT_TYPE:
 					let select = question.querySelector("select");
 					answer = select.querySelector("option[selected='selected'").textContent;
 					break;
-				case "order":
+				case ORDER_TYPE:
 					answer = [];
 					let questionOrder = question.querySelector(".question-order");
 					let items = questionOrder.querySelectorAll("div");
@@ -87,22 +74,57 @@ function createFile(sendResponse) {
 						answer.push(item.textContent);
 					}
 					break;
-				case "":
+				default:
 					console.log("Такой тип вопроса не учтен...\nВопрос: " + res["questions"][i]["title"] + "\nHint: "+hint.textContent);
 					break;
 			}
-			console.log(answer!=undefined);
 			res["questions"][i]["answer"] = answer;
 		}
 	}
 	else {
 		res["isTestTab"] = false;
 	}
-	console.log(res);
 	sendResponse(res);
 }
 
 function solveTest(sendResponse, answerJSON) {
-	console.log(JSON.parse(answerJSON));
+	var report = JSON.parse(answerJSON);
+	var questions = document.querySelectorAll(".question")
+	for (let question of questions) {
+		let questionId = question.dataset.id;
+		let currentQuestion;
+		for (let reportQuestion of report["questions"]) {
+			if (reportQuestion.id == questionId) {
+				currentQuestion = reportQuestion;
+				break;
+			}
+		}	
+		switch (currentQuestion.type) {
+			case RADIO_TYPE:
+				let radios = question.querySelectorAll("input[type='radio']");
+				for (let radio of radios) {
+					if (radio.value == currentQuestion.answer) {
+						radio.click();
+						break;
+					}
+				}
+				break;
+			case TEXT_TYPE:
+				let input = question.querySelector("input[type='text']");
+				input.focus();
+				input.value = currentQuestion.answer;
+				break;
+			case CONNECTPAIRS_TYPE:
+				console.log(currentQuestion.answer);
+				for (let fItem in currentQuestion.answer) {
+					question.querySelector(".qt_connect_item[id='"+fItem+"']").click();
+					question.querySelector(".qt_connect_item[id='"+currentQuestion.answer[fItem]+"']").click();
+				} 
+				break;
+			default:
+				console.log("Такой тип вопроса не учтен...");
+				break;
+		}	
+	}
 	sendResponse({});
 }
