@@ -9,35 +9,80 @@ window.onload = function() {
 			for (let i=0; i<questions.length; i++) {
 				let question = questions[i];
 				let hint = question.querySelector(".hint");
-				let type;
+				let type = "";
 				let isCorrect = question.classList.contains("correct");
-				if (hint.textContent=="Выберите один правильный ответ") type = "radio";
-				if (hint.textContent=="Введите ответ в виде текста (регистр не учитывается)") type = "text";
-				if (hint.textContent=="Соедините элементы попарно (неверно соединенную пару можно разбить, щелкнув на крестик)") type = "connectPairs";
+				switch (hint.textContent) {
+					case "Выберите один правильный ответ":
+						type="radio";
+						break;
+					case "Введите ответ в виде текста (регистр не учитывается)":
+					case "Введите на месте пропуска текст (регистр не учитывается)":
+						type = "text";
+						break;
+					case "Соедините элементы попарно (неверно соединенную пару можно разбить, щелкнув на крестик)":
+						type = "connectPairs";
+						break;
+					case "Выберите один или несколько правильных ответов":
+						type="checks";
+						break;
+					case "Выберите из выпадающего списка правильный ответ":
+						type="select";
+						break;
+					case "Расставьте в правильном порядке":
+						type="order";
+						break;
+				}
 				res["questions"][i] = {};
-				res["questions"][i]["title"] = question.querySelector(".question-description p").innerHTML;
+				res["questions"][i]["title"] = question.querySelector(".question-description p").textContent;
 				res["questions"][i]["type"] = type;
 				res["questions"][i]["isCorrect"] = isCorrect;
+				let answer;
 				switch (type) {
 					case "radio":
 						let choosenLabel = question.querySelector("label.checked");
 						let choosenRadioOuterHtml = choosenLabel.querySelector("input").outerHTML;
-						res["questions"][i]["answer"] = choosenLabel.innerHTML.replace(choosenRadioOuterHtml, "").trim();
+						answer = choosenLabel.innerHTML.replace(choosenRadioOuterHtml, "").trim();
 						break;
 					case "text":
 						let response = question.querySelector(".response input");
-						res["questions"][i]["answer"] = response.value;
+						answer = response.value;
 						break;
 					case "connectPairs":
+						answer = {};
 						let pairs = question.querySelectorAll(".qt_connect_group");
-						let answer = {};
 						for (pair of pairs) {
 							let items = pair.querySelectorAll(".qt_connect_item");
 							answer[items[0].innerHTML.trim()] = items[1].innerHTML.trim();
 						}
-						res["questions"][i]["answer"] = answer;
+						break;
+					case "checks":
+						answer = [];
+						let labels = question.querySelectorAll("label");
+						for (let label of labels) {
+							let box = label.querySelector("input[type='checkbox']");
+							if (box.checked) {
+								answer.push(label.innerHTML.replace(box.outerHTML, "").trim());
+							}
+						}
+						break;
+					case "select":
+						let select = question.querySelector("select");
+						answer = select.querySelector("option[selected='selected'").textContent;
+						break;
+					case "order":
+						answer = [];
+						let questionOrder = question.querySelector(".question-order");
+						let items = questionOrder.querySelectorAll("div");
+						for (let item of items) {
+							answer.push(item.textContent);
+						}
+						break;
+					case "":
+						console.log("Такой тип вопроса не учтен...\nВопрос: " + res["questions"][i]["title"] + "\nHint: "+hint.textContent);
 						break;
 				}
+				console.log(answer!=undefined);
+				res["questions"][i]["answer"] = answer;
 			}
 		}
 		else {
