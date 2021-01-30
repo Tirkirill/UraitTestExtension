@@ -11,7 +11,7 @@ if (create_file_button) {
 					else {
 						alert(res.isTestTab);
 						var hiddenElement = document.createElement('a');
-						hiddenElement.href = 'data:attachment/text,' + encodeURI(JSON.stringify(res));
+						hiddenElement.href = 'data:attachment/text,' + encodeURIComponent(JSON.stringify(res));
 						hiddenElement.target = '_blank';
 						hiddenElement.download = 'Test.txt';
 						hiddenElement.click();

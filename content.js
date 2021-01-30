@@ -103,6 +103,6 @@ function createFile(sendResponse) {
 }
 
 function solveTest(sendResponse, answerJSON) {
-	console.log(answerJSON);
+	console.log(JSON.parse(answerJSON));
 	sendResponse({});
 }
