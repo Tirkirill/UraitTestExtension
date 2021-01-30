@@ -1,3 +1,5 @@
+const { timeout, delay } = require("q");
+
 const RADIO_TYPE = 1;
 const CONNECTPAIRS_TYPE = 7;
 const TEXT_TYPE = 6;
@@ -27,7 +29,7 @@ function createFile(sendResponse) {
 		for (let i=0; i<questions.length; i++) {
 			let question = questions[i];
 			let hint = question.querySelector(".hint");
-			let type = question.dataset.type;
+			let type = Number(question.dataset.type);
 			let isCorrect = question.classList.contains("correct");
 			res["questions"][i] = {};
 			res["questions"][i]["title"] = question.querySelector(".question-description p").textContent;
@@ -58,20 +60,20 @@ function createFile(sendResponse) {
 					for (let label of labels) {
 						let box = label.querySelector("input[type='checkbox']");
 						if (box.checked) {
-							answer.push(label.innerHTML.replace(box.outerHTML, "").trim());
+							answer.push(box.value);
 						}
 					}
 					break;
 				case SELECT_TYPE:
 					let select = question.querySelector("select");
-					answer = select.querySelector("option[selected='selected'").textContent;
+					answer = select.querySelector("option[selected='selected'").value;
 					break;
 				case ORDER_TYPE:
 					answer = [];
 					let questionOrder = question.querySelector(".question-order");
 					let items = questionOrder.querySelectorAll("div");
 					for (let item of items) {
-						answer.push(item.textContent);
+						answer.push(item.dataset.id);
 					}
 					break;
 				default:
@@ -92,6 +94,7 @@ function solveTest(sendResponse, answerJSON) {
 	var questions = document.querySelectorAll(".question")
 	for (let question of questions) {
 		let questionId = question.dataset.id;
+		question.dataset.tryingAnswer = true;
 		let currentQuestion;
 		for (let reportQuestion of report["questions"]) {
 			if (reportQuestion.id == questionId) {
@@ -115,11 +118,18 @@ function solveTest(sendResponse, answerJSON) {
 				input.value = currentQuestion.answer;
 				break;
 			case CONNECTPAIRS_TYPE:
-				console.log(currentQuestion.answer);
 				for (let fItem in currentQuestion.answer) {
 					question.querySelector(".qt_connect_item[id='"+fItem+"']").click();
 					question.querySelector(".qt_connect_item[id='"+currentQuestion.answer[fItem]+"']").click();
 				} 
+				break;
+			case CHECKS_TYPE:
+				let checks = question.querySelectorAll("input[type='checkbox']");
+				for (let check of checks) {
+					if (currentQuestion.answer.includes(check.value)) {
+						check.click();
+					}
+				}
 				break;
 			default:
 				console.log("Такой тип вопроса не учтен...");
