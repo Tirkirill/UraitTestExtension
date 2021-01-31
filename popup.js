@@ -1,3 +1,4 @@
+//Дополнить своими ошибками
 var create_file_button = document.querySelector("#create_file__button");
 var solve_test_button = document.querySelector("#solve_test__button");
 if (create_file_button) {
@@ -10,11 +11,10 @@ if (create_file_button) {
 						alert("Попробуйте перезагрузить страницу!");
 					}
 					else {
-						alert(res.isTestTab);
 						var hiddenElement = document.createElement('a');
 						hiddenElement.href = 'data:attachment/text,' + encodeURIComponent(JSON.stringify(res));
 						hiddenElement.target = '_blank';
-						hiddenElement.download = 'Test.txt';
+						hiddenElement.download = res.fileTitle + ".txt";
 						hiddenElement.click();
 					}
 				});
