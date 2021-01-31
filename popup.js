@@ -1,4 +1,4 @@
-//Дополнить своими ошибками
+//Дополнить своими ошибками, безопасный режим для соединения пар, форматы
 var create_file_button = document.querySelector("#create_file__button");
 var solve_test_button = document.querySelector("#solve_test__button");
 if (create_file_button) {

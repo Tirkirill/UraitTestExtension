@@ -170,7 +170,7 @@ function solveTest(sendResponse, answerJSON) {
 					let check = label.children[0];
 					if (currentQuestion.answer.includes(check.value)) {
 						if (!check.checked)  {
-							setTimeout(()=>check.click(), j*1000)
+							setTimeout(()=>check.click(), j*250)
 							j++;
 						};
 						label.style.cssText = style;
