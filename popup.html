@@ -4,6 +4,16 @@
 </head>
 <body>
     <button id="create_file__button">Сформировать файл по тесту</button>
+    <div>
+        <input type="radio" id="forHuman" name="format" value="forHuman">
+        <label for="forHuman">В человекочитаемом формате</label>
+        <br>
+        <input checked type="radio" id="forComputer" name="format" value="forComputer">
+        <label for="forComputer">В удобном для компьютера формате</label>
+        <br>
+        <input type="radio" id="forBoth" name="format" value="forBoth">
+        <label for="forBoth">Два файла</label>
+    </div>
     <input type="file" id="answerJSON" name="answerJSON" accept=".txt">
     <button id="solve_test__button">Решить тест по файлу</button>
     <script type="text/javascript" src="popup.js"></script>

@@ -1,17 +1,16 @@
-const { timeout, delay } = require("q");
-
 const RADIO_TYPE = 1;
 const CONNECTPAIRS_TYPE = 7;
 const TEXT_TYPE = 6;
 const ORDER_TYPE = 9;
 const CHECKS_TYPE = 2;
 const SELECT_TYPE = 8;
+const DRAG_TYPE = 5;
 
 
 window.onload = function() {
     chrome.runtime.onMessage.addListener(function(req, _, sendResponse) {
 		if (req.action == "create") {
-			createFile(sendResponse);
+			createFile(req.format, sendResponse);
 		}
 		if (req.action == "solve") {
 			solveTest(sendResponse, req.answerJSON);
@@ -19,7 +18,7 @@ window.onload = function() {
 	});
 };
 
-function createFile(sendResponse) {
+function createFile(format, sendResponse) {
 	var res = {};
 	let isTest = document.querySelector(".quiz-content");
 	if (isTest) {
@@ -91,7 +90,11 @@ function createFile(sendResponse) {
 
 function solveTest(sendResponse, answerJSON) {
 	var report = JSON.parse(answerJSON);
-	var questions = document.querySelectorAll(".question")
+	let progress = document.querySelector("#questions-progress");
+	for (let div of progress.querySelectorAll("a")) {
+		if (!div.classList.contains("answered")) div.classList.add("answered");
+	};
+	var questions = document.querySelectorAll(".question");
 	for (let question of questions) {
 		let questionId = question.dataset.id;
 		question.dataset.tryingAnswer = true;
@@ -127,7 +130,7 @@ function solveTest(sendResponse, answerJSON) {
 				let checks = question.querySelectorAll("input[type='checkbox']");
 				for (let check of checks) {
 					if (currentQuestion.answer.includes(check.value)) {
-						check.click();
+						if (!check.checked) check.click();
 					}
 				}
 				break;

@@ -2,9 +2,10 @@ var create_file_button = document.querySelector("#create_file__button");
 var solve_test_button = document.querySelector("#solve_test__button");
 if (create_file_button) {
 	create_file_button.onclick = () => {
+		let format = document.querySelector('input[name="format"]:checked').value;
 		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 			chrome.tabs.getSelected(null, function(tab) {
-				chrome.tabs.sendMessage(tab.id, {action:"create"}, function(res) {
+				chrome.tabs.sendMessage(tab.id, {action:"create", format: format}, function(res) {
 					if (chrome.runtime.lastError) {
 						alert("Попробуйте перезагрузить страницу!");
 					}
