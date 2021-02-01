@@ -12,6 +12,7 @@
     color:black;
     border:1px solid black;
     min-height: 40px;
+    outline:none;
 }
 
 .panel button:hover {
@@ -21,6 +22,6 @@
     cursor: pointer;
 }
 
-#file_name {
+.file_name {
     font-weight: bold;
 }

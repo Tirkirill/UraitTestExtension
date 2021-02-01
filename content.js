@@ -28,6 +28,9 @@ window.onload = function() {
 			case "solve":
 				solveTest(sendResponse, req.answerJSON);
 				break;
+			case "append":
+				appendTest(sendResponse, req.answerJSON);
+				break;
 		}
 	});
 };
@@ -36,72 +39,11 @@ function createFile(sendResponse) {
 	var res = {};
 	let isTest = document.querySelector(".quiz-content");
 	if (isTest) {
-		res["isTestTab"] = true;
-		res["questions"] = [];
-		let questions = document.querySelectorAll(".question");
-		for (let i=0; i<questions.length; i++) {
-			let question = questions[i];
-			let hint = question.querySelector(".hint");
-			let type = Number(question.dataset.type);
-			let isCorrect = question.classList.contains("correct");
-			res["questions"][i] = {};
-			res["questions"][i]["title"] = question.querySelector(".question-description p").textContent;
-			res["questions"][i]["type"] = type;
-			res["questions"][i]["id"] = question.dataset.id;
-			let answer;
-			switch (type) {
-				case RADIO_TYPE:
-					let choosenLabel = question.querySelector("label.checked");
-					answer = choosenLabel.querySelector("input").value;
-					break;
-				case TEXT_TYPE:
-				case TEXT_TYPE2:
-					let response = question.querySelector(".response input");
-					answer = response.value;
-					break;
-				case CONNECTPAIRS_TYPE:
-					answer = {};
-					let pairs = question.querySelectorAll(".qt_connect_group");
-					for (pair of pairs) {
-						let items = pair.querySelectorAll(".qt_connect_item");
-						answer[items[0].id] = items[1].id;
-					}
-					break;
-				case CHECKS_TYPE:
-					answer = [];
-					let labels = question.querySelectorAll("label");
-					for (let label of labels) {
-						let box = label.querySelector("input[type='checkbox']");
-						if (box.checked) {
-							answer.push(box.value);
-						}
-					}
-					break;
-				case SELECT_TYPE:
-					let select = question.querySelector("select");
-					answer = select.querySelector("option[selected='selected'").value;
-					break;
-				case ORDER_TYPE:
-					answer = [];
-					let questionOrder = question.querySelector(".question-order");
-					let items = questionOrder.querySelectorAll("div");
-					for (let item of items) {
-						answer.push(item.dataset.id);
-					}
-					break;
-				default:
-					console.log("Такой тип вопроса не учтен...\nВопрос: " + res["questions"][i]["title"] + "\nHint: "+hint.textContent);
-					break;
-			}
-			if (isCorrect) res["questions"][i]["correctAnswer"] = answer;
-			else {
-				res["questions"][i]["incorrectAnswers"] = [answer];
-			}
-		}
-		res["fileTitle"] = document.querySelectorAll(".quiz-content a")[1].textContent;
+		res = getTestRes();
 	}
 	else {
-		res["isTestTab"] = false;
+		res["OK"] = false;
+		res["errorCode"] = 0;
 	}
 	sendResponse(res);
 }
@@ -145,7 +87,7 @@ function solveTest(sendResponse, answerJSON) {
 			}
 		}
 	}
-	sendResponse({});
+	sendResponse({"OK":true});
 }
 
 function format(str, params) {
@@ -229,4 +171,80 @@ function setInputs(type, answer, correct) {
 			console.log("Такой тип вопроса не учтен...");
 			break;
 	}	
+}
+
+function getTestRes() {
+	res["OK"] = true;
+	res["questions"] = [];
+	let questions = document.querySelectorAll(".question");
+	for (let i=0; i<questions.length; i++) {
+		let question = questions[i];
+		let hint = question.querySelector(".hint");
+		let type = Number(question.dataset.type);
+		let isCorrect = question.classList.contains("correct");
+		res["questions"][i] = {};
+		res["questions"][i]["title"] = question.querySelector(".question-description p").textContent;
+		res["questions"][i]["type"] = type;
+		res["questions"][i]["id"] = question.dataset.id;
+		let answer;
+		switch (type) {
+			case RADIO_TYPE:
+				let choosenLabel = question.querySelector("label.checked");
+				answer = choosenLabel.querySelector("input").value;
+				break;
+			case TEXT_TYPE:
+			case TEXT_TYPE2:
+				let response = question.querySelector(".response input");
+				answer = response.value;
+				break;
+			case CONNECTPAIRS_TYPE:
+				answer = {};
+				let pairs = question.querySelectorAll(".qt_connect_group");
+				for (pair of pairs) {
+					let items = pair.querySelectorAll(".qt_connect_item");
+					answer[items[0].id] = items[1].id;
+				}
+				break;
+			case CHECKS_TYPE:
+				answer = [];
+				let labels = question.querySelectorAll("label");
+				for (let label of labels) {
+					let box = label.querySelector("input[type='checkbox']");
+					if (box.checked) {
+						answer.push(box.value);
+					}
+				}
+				break;
+			case SELECT_TYPE:
+				let select = question.querySelector("select");
+				answer = select.querySelector("option[selected='selected'").value;
+				break;
+			case ORDER_TYPE:
+				answer = [];
+				let questionOrder = question.querySelector(".question-order");
+				let items = questionOrder.querySelectorAll("div");
+				for (let item of items) {
+					answer.push(item.dataset.id);
+				}
+				break;
+			default:
+				console.log("Такой тип вопроса не учтен...\nВопрос: " + res["questions"][i]["title"] + "\nHint: "+hint.textContent);
+				break;
+		}
+		if (isCorrect) res["questions"][i]["correctAnswer"] = answer;
+		else {
+			res["questions"][i]["incorrectAnswers"] = [answer];
+		}
+	}
+	res["fileTitle"] = document.querySelectorAll(".quiz-content a")[1].textContent;
+	return res;
+}
+
+
+function appendTest(sendResponse, answerJSON) {
+	var oldReport = answerJSON;
+	var newReport = getTestRes();
+	console.log(oldReport);
+	console.log(newReport);
+	sendResponse({"OK":true});
 }
