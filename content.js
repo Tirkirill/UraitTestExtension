@@ -8,10 +8,6 @@ const SELECT_TYPE = 8;
 //DRAG_TYPE = по группам распределение
 const DRAG_TYPE = 5;
 
-const CORRECT = 0;
-const NEUTRAL = 1;
-const INCORRECT = 2;
-
 const RIGHT_ANSWER_STYLE = 'color:green; font-size:16px; font-weight: bold';
 const RIGHT_ANSWER_TEMPLATE = "<span style= 'color:green; font-size:16px; font-weight: bold'>{0}</span>";
 const WRONG_ANSWER_STYLE = 'color:red; font-size:16px; font-weight: bold';
@@ -65,7 +61,7 @@ function solveTest(sendResponse, answerJSON) {
 		let type = currentQuestion.type;
 		if (currentQuestion.rightAnswer) {
 			answer = currentQuestion.rightAnswer;
-			setInputs(currentQuestion.type, answert, CORRECT);
+			setInputs(currentQuestion.type, answert, true);
 		}
 		else {
 			for (let incorrect_answer of currentQuestion.incorrectAnswers) {
@@ -75,13 +71,10 @@ function solveTest(sendResponse, answerJSON) {
 					case TEXT_TYPE:
 					case TEXT_TYPE2:
 					case SELECT_TYPE:
-						correct = INCORRECT;
-						break;
-					default:
-						correct = NEUTRAL;
+						correct = false;
+						setInputs(type, incorrect_answer, correct);
 						break;
 				}
-				setInputs(type, incorrect_answer, correct);
 			}
 		}
 	}
@@ -92,22 +85,16 @@ function format(str, params) {
 	return str.replace(/\{(\w+)\}/g, function(a,b) { return params[b]});
 }
 
-function setInputs(type, answer, correct) {
+function setInputs(type, answer, isCorrect) {
 	let template;
 	let style;
-	switch(correct) {
-		case CORRECT:
-			template = RIGHT_ANSWER_TEMPLATE;
-			style = RIGHT_ANSWER_STYLE;
-			break;
-		case NEUTRAL:
-			template = NEUTRAL_ANSWER_TEMPLATE;
-			style = NEUTRAL_ANSWER_STYLE;
-			break;
-		case INCORRECT:
-			template = INCORRECT_ANSWER_TEMPLATE;
-			style = INCORRECT_ANSWER_STYLE;
-			break;
+	if (isCorrect) {
+		template = RIGHT_ANSWER_TEMPLATE;
+		style = RIGHT_ANSWER_STYLE;
+	}
+	else {
+		template = WRONG_ANSWER_TEMPLATE;
+		style = WRONG_ANSWER_STYLE;	
 	}
 	switch (type) {
 		case RADIO_TYPE:
@@ -171,6 +158,13 @@ function setInputs(type, answer, correct) {
 				let groupTitle = document.getElementById(groupId).querySelector(".question_answer_title").textContent;
 				document.getElementById(itemId).innerHTML += format(template, [groupTitle]);
 			}
+			break;
+		case SELECT_TYPE:
+			let answerOption = question.querySelector("option[value='"+answer+"']");
+			//проверить: вряд-ли это работает
+			answerOption.selected = true;
+			let hint = question.querySelector(".hint");
+			hint.innerHTML += format(template, " "+answerOption.textContent);
 			break;
 		default:
 			console.log("Такой тип вопроса не учтен...");
