@@ -1,11 +1,11 @@
 //Дополнить своими ошибками, безопасный режим для соединения пар
-function containsFile() {
+function getFile() {
 	let file = document.querySelector("#answerJSON").files[0]; 
 	if (!file) {
 		alert("Сначала нужно загрузить файл!");
 		return false;
 	}
-	return true;
+	return file;
 }
 
 
@@ -46,7 +46,7 @@ window.onload=()=> {
 	}
 
 	solve_test_button.onclick = () => {
-		if (containsFile()) {
+		if (file = getFile()) {
 			var reader = new FileReader();
 			reader.readAsText(file);
 			reader.onload = function() {
@@ -65,7 +65,7 @@ window.onload=()=> {
 	}
 
 	append_test_button.onclick = ()=> {
-		if (containsFile()) {
+		if (file = getFile()) {
 			var reader = new FileReader();
 			reader.readAsText(file);
 			reader.onload = function() {

@@ -5,6 +5,7 @@ const TEXT_TYPE2 = 3;
 const ORDER_TYPE = 9;
 const CHECKS_TYPE = 2;
 const SELECT_TYPE = 8;
+//DRAG_TYPE = по группам распределение
 const DRAG_TYPE = 5;
 
 const CORRECT = 0;
@@ -29,6 +30,7 @@ window.onload = function() {
 				solveTest(sendResponse, req.answerJSON);
 				break;
 			case "append":
+				alert("HI!");
 				appendTest(sendResponse, req.answerJSON);
 				break;
 		}
@@ -36,7 +38,7 @@ window.onload = function() {
 };
 
 function createFile(sendResponse) {
-	var res = {};
+	let res = {};
 	let isTest = document.querySelector(".quiz-content");
 	if (isTest) {
 		res = getTestRes();
@@ -60,13 +62,9 @@ function solveTest(sendResponse, answerJSON) {
 				break;
 			}
 		}	
-		let template;
-		let style;
 		let type = currentQuestion.type;
 		if (currentQuestion.rightAnswer) {
 			answer = currentQuestion.rightAnswer;
-			template = RIGHT_ANSWER_TEMPLATE;
-			style = RIGHT_ANSWER_STYLE;
 			setInputs(currentQuestion.type, answert, CORRECT);
 		}
 		else {
@@ -167,6 +165,13 @@ function setInputs(type, answer, correct) {
 				}
 			}
 			break;
+		case DRAG_TYPE:
+			for (let itemId in answer) {
+				let groupId = answer[itemId];
+				let groupTitle = document.getElementById(groupId).querySelector(".question_answer_title").textContent;
+				document.getElementById(itemId).innerHTML += format(template, [groupTitle]);
+			}
+			break;
 		default:
 			console.log("Такой тип вопроса не учтен...");
 			break;
@@ -174,11 +179,13 @@ function setInputs(type, answer, correct) {
 }
 
 function getTestRes() {
+	res = {};
 	res["OK"] = true;
 	res["questions"] = [];
 	let questions = document.querySelectorAll(".question");
 	for (let i=0; i<questions.length; i++) {
 		let question = questions[i];
+		res["questions"][i]["incorrectAnswers"] = [];
 		let hint = question.querySelector(".hint");
 		let type = Number(question.dataset.type);
 		let isCorrect = question.classList.contains("correct");
@@ -227,6 +234,18 @@ function getTestRes() {
 					answer.push(item.dataset.id);
 				}
 				break;
+			case DRAG_TYPE:
+				answer = {};
+				let groups = question.querySelectorAll(".question_answer");
+				for (let group of groups) {
+					let groupId = group.id;
+					let items = group.querySelectorAll(".question_type_5");	
+					for (let item of items) {
+						let itemId = item.id;
+						answer[itemId] = groupId;
+					}
+				}
+				break;
 			default:
 				console.log("Такой тип вопроса не учтен...\nВопрос: " + res["questions"][i]["title"] + "\nHint: "+hint.textContent);
 				break;
@@ -240,11 +259,42 @@ function getTestRes() {
 	return res;
 }
 
-
+//Порядок важен для ORDER_TYPE
+//Для CONNECTPAIRS_TYPE и DRAG_TYPE важны сочетания
 function appendTest(sendResponse, answerJSON) {
-	var oldReport = answerJSON;
-	var newReport = getTestRes();
-	console.log(oldReport);
-	console.log(newReport);
-	sendResponse({"OK":true});
+	var oldReport = JSON.parse(answerJSON).questions; 
+	var newReport = getTestRes().questions;
+	for (let oldInfo of oldReport) {
+		if (oldInfo.correctAnswer) continue;
+		let id = question.id;
+		let newInfo = newReport.find((question)=>question.id = id);
+		if (newInfo.correctAnswer) oldInfo.correctAnswer = newInfo.correctAnswer;
+		else {
+			let newIncorrect = newInfo.incorrectAnswers[0];
+			let oldIncorrects = oldInfo.incorrectAnswers;
+			switch (newInfo.type) {
+				case TEXT_TYPE:
+				case TEXT_TYPE2:
+				case SELECT_TYPE:
+				case RADIO_TYPE:
+					if (oldIncorrects.indexOf(newIncorrect)==-1) oldIncorrects.push(newIncorrect)
+					break;
+				//В разработке
+				// case ORDER_TYPE:
+				// 	for (let i=0; i<oldIncorrects.length; i++) {
+				// 		let oldIncorrect = oldIncorrects[i];
+				// 		let isSame = true;
+				// 		for (let j=0; j<oldIncorrect.length;j++) {
+				// 			if (oldIncorrect[j]!=newIncorrect[j]) {
+				// 				isSame = false;
+				// 				break;
+				// 			}
+				// 		}
+				// 		if (isSame) break;
+				// 	}
+				// 	break;
+			}
+		}
+	}
+	sendResponse({...oldInfo, "OK":true});
 }
