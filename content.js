@@ -59,9 +59,10 @@ function solveTest(sendResponse, answerJSON) {
 			}
 		}	
 		let type = currentQuestion.type;
-		if (currentQuestion.rightAnswer) {
-			answer = currentQuestion.rightAnswer;
-			setInputs(currentQuestion.type, answert, true);
+		let answer;
+		if (currentQuestion.correctAnswer) {
+			answer = currentQuestion.correctAnswer;
+			setInputs(currentQuestion.type, answer, true, question);
 		}
 		else {
 			for (let incorrect_answer of currentQuestion.incorrectAnswers) {
@@ -71,8 +72,7 @@ function solveTest(sendResponse, answerJSON) {
 					case TEXT_TYPE:
 					case TEXT_TYPE2:
 					case SELECT_TYPE:
-						correct = false;
-						setInputs(type, incorrect_answer, correct);
+						setInputs(type, incorrect_answer, false, question);
 						break;
 				}
 			}
@@ -85,9 +85,10 @@ function format(str, params) {
 	return str.replace(/\{(\w+)\}/g, function(a,b) { return params[b]});
 }
 
-function setInputs(type, answer, isCorrect) {
+function setInputs(type, answer, isCorrect, question) {
 	let template;
 	let style;
+	let hint;
 	if (isCorrect) {
 		template = RIGHT_ANSWER_TEMPLATE;
 		style = RIGHT_ANSWER_STYLE;
@@ -103,14 +104,14 @@ function setInputs(type, answer, isCorrect) {
 				let radio = label.children[0];
 				if (radio.value == answer) {
 					label.style.cssText = style;
-					radio.click();
+					if (correct) radio.click();
 					break;
 				}
 			}
 			break;
 		case TEXT_TYPE:
 		case TEXT_TYPE2:
-			let hint = question.querySelector(".hint");
+			hint = question.querySelector(".hint");
 			hint.innerHTML += format(template, [answer]);
 			break;
 		case CONNECTPAIRS_TYPE:
@@ -118,15 +119,17 @@ function setInputs(type, answer, isCorrect) {
 			for (let fItemId in answer) {
 				let fItem = question.querySelector(".qt_connect_item[id='"+fItemId+"']");
 				let sItem = question.querySelector(".qt_connect_item[id='"+answer[fItemId]+"']");
-				setTimeout(()=> {
-					fItem.click();
-				}, 250*i)
-				setTimeout(()=> {
-					sItem.click();
-				}, 250*i)
 				fItem.innerHTML += format(template, [i-1]);
 				sItem.innerHTML += format(template, [i-1]);
-				i++;
+				if (correct) {
+					setTimeout(()=> {
+						fItem.click();
+					}, 250*i)
+					setTimeout(()=> {
+						sItem.click();
+					}, 250*i)
+					i++;
+				}
 			} 
 			break;
 		case CHECKS_TYPE:
@@ -135,10 +138,12 @@ function setInputs(type, answer, isCorrect) {
 			for (let label of checkLabels) {
 				let check = label.children[0];
 				if (answer.includes(check.value)) {
-					if (!check.checked)  {
-						setTimeout(()=>check.click(), j*250)
-						j++;
-					};
+					if (correct) {
+						if (!check.checked)  {
+							setTimeout(()=>check.click(), j*250)
+							j++;
+						};
+					}
 					label.style.cssText = style;
 				}
 			}
@@ -162,8 +167,10 @@ function setInputs(type, answer, isCorrect) {
 		case SELECT_TYPE:
 			let answerOption = question.querySelector("option[value='"+answer+"']");
 			//проверить: вряд-ли это работает
-			answerOption.selected = true;
-			let hint = question.querySelector(".hint");
+			if (correct) {
+				answerOption.selected = true;
+			}
+			hint = question.querySelector(".hint");
 			hint.innerHTML += format(template, " "+answerOption.textContent);
 			break;
 		default:
@@ -179,11 +186,12 @@ function getTestRes() {
 	let questions = document.querySelectorAll(".question");
 	for (let i=0; i<questions.length; i++) {
 		let question = questions[i];
-		res["questions"][i]["incorrectAnswers"] = [];
+
 		let hint = question.querySelector(".hint");
 		let type = Number(question.dataset.type);
 		let isCorrect = question.classList.contains("correct");
 		res["questions"][i] = {};
+		res["questions"][i]["incorrectAnswers"] = [];
 		res["questions"][i]["title"] = question.querySelector(".question-description p").textContent;
 		res["questions"][i]["type"] = type;
 		res["questions"][i]["id"] = question.dataset.id;
