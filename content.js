@@ -17,16 +17,18 @@ const NEUTRAL_ANSWER_TEMPLATE = "<span style= 'color:darkgray; font-size:16px; f
 
 window.onload = function() {
     chrome.runtime.onMessage.addListener(function(req, _, sendResponse) {
-		if (req.action == "create") {
-			createFile(req.format, sendResponse);
-		}
-		if (req.action == "solve") {
-			solveTest(sendResponse, req.answerJSON);
+		switch(req.action) {
+			case "create":
+				createFile(sendResponse);
+				break;
+			case "solve":
+				solveTest(sendResponse, req.answerJSON);
+				break;
 		}
 	});
 };
 
-function createFile(format, sendResponse) {
+function createFile(sendResponse) {
 	var res = {};
 	let isTest = document.querySelector(".quiz-content");
 	if (isTest) {

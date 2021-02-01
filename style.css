@@ -1,0 +1,22 @@
+.panel {
+    margin-bottom:20px;
+}
+
+.panel * {
+    margin-top:5px;
+}
+
+.panel button {
+    width: 140px;
+    height: 40px;
+    background-color:white;
+    color:black;
+    border:1px solid black;
+}
+
+.panel button:hover {
+    transform: scale(0.95);
+    background-color: black;
+    color:white;
+    cursor: pointer;
+}
