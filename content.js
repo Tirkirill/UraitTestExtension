@@ -92,11 +92,12 @@ function createFile(sendResponse) {
 			}
 			res["questions"][i]["answer"] = answer;
 		}
+		res["fileTitle"] = document.querySelectorAll(".quiz-content a")[1].textContent;
 	}
 	else {
 		res["isTestTab"] = false;
 	}
-	sendResponse({...res, fileTitle: document.querySelectorAll(".quiz-content a")[1].textContent});
+	sendResponse(res);
 }
 
 function solveTest(sendResponse, answerJSON) {

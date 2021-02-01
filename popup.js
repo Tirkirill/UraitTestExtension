@@ -11,6 +11,10 @@ if (create_file_button) {
 						alert("Попробуйте перезагрузить страницу!");
 					}
 					else {
+						if (!res.isTestTab) {
+							alert("Выберите вкладку с тестом");
+							return;
+						}
 						var hiddenElement = document.createElement('a');
 						hiddenElement.href = 'data:attachment/text,' + encodeURIComponent(JSON.stringify(res));
 						hiddenElement.target = '_blank';
@@ -22,7 +26,11 @@ if (create_file_button) {
 		});
 	}
 	solve_test_button.onclick = () => {
-		let file = document.querySelector("#answerJSON").files[0];
+		let file = document.querySelector("#answerJSON").files[0]; 
+		if (!file) {
+			alert("Сначала нужно загрузить файл!");
+			return;
+		}
 		var reader = new FileReader();
 		reader.readAsText(file);
 		reader.onload = function() {
