@@ -1,7 +1,7 @@
 {
 	"manifest_version":2,
 	"name":"DBTest",
-	"version":"0.0.2",
+	"version":"1.0.0",
 	"author":"me",
 	"description":"Плагин для работы с тестами по БД",
 	"browser_action": {

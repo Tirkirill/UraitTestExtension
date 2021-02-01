@@ -58,7 +58,8 @@ if (create_file_button) {
 	}
 
 	file_input.onchange = ()=> {
-		file_name.textContent = file_input.files[0].name;
+		let file = file_input.files[0];
+		if (file) file_name.textContent = file.name;
 	}
 
 	
