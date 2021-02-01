@@ -1,4 +1,4 @@
-//Дополнить своими ошибками, безопасный режим для соединения пар, форматы
+//Дополнить своими ошибками, безопасный режим для соединения пар
 var create_file_button = document.getElementById("create_file__button");
 var solve_test_button = document.getElementById("solve_test__button");
 var load_file_button = document.getElementById("load_file__button");
@@ -12,6 +12,7 @@ if (create_file_button) {
 				chrome.tabs.sendMessage(tab.id, {action:"create"}, function(res) {
 					if (chrome.runtime.lastError) {
 						alert("Попробуйте перезагрузить страницу!");
+						console.log(chrome.runtime.lastError);
 					}
 					else {
 						if (!res.isTestTab) {
@@ -61,8 +62,4 @@ if (create_file_button) {
 		let file = file_input.files[0];
 		if (file) file_name.textContent = file.name;
 	}
-
-	
-
-
 }

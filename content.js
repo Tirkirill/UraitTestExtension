@@ -7,6 +7,10 @@ const CHECKS_TYPE = 2;
 const SELECT_TYPE = 8;
 const DRAG_TYPE = 5;
 
+const CORRECT = 0;
+const NEUTRAL = 1;
+const INCORRECT = 2;
+
 const RIGHT_ANSWER_STYLE = 'color:green; font-size:16px; font-weight: bold';
 const RIGHT_ANSWER_TEMPLATE = "<span style= 'color:green; font-size:16px; font-weight: bold'>{0}</span>";
 const WRONG_ANSWER_STYLE = 'color:red; font-size:16px; font-weight: bold';
@@ -43,7 +47,6 @@ function createFile(sendResponse) {
 			res["questions"][i] = {};
 			res["questions"][i]["title"] = question.querySelector(".question-description p").textContent;
 			res["questions"][i]["type"] = type;
-			res["questions"][i]["isCorrect"] = isCorrect;
 			res["questions"][i]["id"] = question.dataset.id;
 			let answer;
 			switch (type) {
@@ -90,7 +93,10 @@ function createFile(sendResponse) {
 					console.log("Такой тип вопроса не учтен...\nВопрос: " + res["questions"][i]["title"] + "\nHint: "+hint.textContent);
 					break;
 			}
-			res["questions"][i]["answer"] = answer;
+			if (isCorrect) res["questions"][i]["correctAnswer"] = answer;
+			else {
+				res["questions"][i]["incorrectAnswers"] = [answer];
+			}
 		}
 		res["fileTitle"] = document.querySelectorAll(".quiz-content a")[1].textContent;
 	}
@@ -114,90 +120,113 @@ function solveTest(sendResponse, answerJSON) {
 		}	
 		let template;
 		let style;
-		if (currentQuestion.isCorrect) {
+		let type = currentQuestion.type;
+		if (currentQuestion.rightAnswer) {
+			answer = currentQuestion.rightAnswer;
 			template = RIGHT_ANSWER_TEMPLATE;
 			style = RIGHT_ANSWER_STYLE;
+			setInputs(currentQuestion.type, answert, CORRECT);
 		}
 		else {
-			switch (currentQuestion.type) {
-				case RADIO_TYPE:
-				case TEXT_TYPE:
-				case TEXT_TYPE2:
-				case SELECT_TYPE:
-					template = WRONG_ANSWER_TEMPLATE;
-					style = WRONG_ANSWER_STYLE;
-					break;
-				default:
-					template = NEUTRAL_ANSWER_TEMPLATE;
-					style = NEUTRAL_ANSWER_STYLE;
-					break;
+			for (let incorrect_answer of currentQuestion.incorrectAnswers) {
+				let correct;
+				switch (currentQuestion.type) {
+					case RADIO_TYPE:
+					case TEXT_TYPE:
+					case TEXT_TYPE2:
+					case SELECT_TYPE:
+						correct = INCORRECT;
+						break;
+					default:
+						correct = NEUTRAL;
+						break;
+				}
+				setInputs(type, incorrect_answer, correct);
 			}
 		}
-		switch (currentQuestion.type) {
-			case RADIO_TYPE:
-				let radioLabels = question.querySelectorAll("label");
-				for (let label of radioLabels) {
-					let radio = label.children[0];
-					if (radio.value == currentQuestion.answer) {
-						label.style.cssText = style;
-						radio.click();
-						break;
-					}
-				}
-				break;
-			case TEXT_TYPE:
-			case TEXT_TYPE2:
-				let hint = question.querySelector(".hint");
-				hint.innerHTML += format(template, [currentQuestion.answer]);
-				break;
-			case CONNECTPAIRS_TYPE:
-				let i = 1;
-				for (let fItemId in currentQuestion.answer) {
-					let fItem = question.querySelector(".qt_connect_item[id='"+fItemId+"']");
-					let sItem = question.querySelector(".qt_connect_item[id='"+currentQuestion.answer[fItemId]+"']");
-					setTimeout(()=> {
-						fItem.click();
-					}, 250*i)
-					setTimeout(()=> {
-						sItem.click();
-					}, 250*i)
-					fItem.innerHTML += format(template, [i-1]);
-					sItem.innerHTML += format(template, [i-1]);
-					i++;
-				} 
-				break;
-			case CHECKS_TYPE:
-				let checkLabels = question.querySelectorAll("label");
-				let j = 1;
-				for (let label of checkLabels) {
-					let check = label.children[0];
-					if (currentQuestion.answer.includes(check.value)) {
-						if (!check.checked)  {
-							setTimeout(()=>check.click(), j*250)
-							j++;
-						};
-						label.style.cssText = style;
-					}
-				}
-				break;
-			case ORDER_TYPE:
-				currentQuestion.answer.indexOf;
-				let sorts =  question.querySelectorAll(".ui-sortable-handle");
-				for (let sort of sorts) {
-					let index = currentQuestion.answer.indexOf(sort.dataset.id);
-					if (index != -1) {
-						sort.innerHTML += format(template, [index]);;
-					}
-				}
-				break;
-			default:
-				console.log("Такой тип вопроса не учтен...");
-				break;
-		}	
 	}
 	sendResponse({});
 }
 
 function format(str, params) {
 	return str.replace(/\{(\w+)\}/g, function(a,b) { return params[b]});
+}
+
+function setInputs(type, answer, correct) {
+	let template;
+	let style;
+	switch(correct) {
+		case CORRECT:
+			template = RIGHT_ANSWER_TEMPLATE;
+			style = RIGHT_ANSWER_STYLE;
+			break;
+		case NEUTRAL:
+			template = NEUTRAL_ANSWER_TEMPLATE;
+			style = NEUTRAL_ANSWER_STYLE;
+			break;
+		case INCORRECT:
+			template = INCORRECT_ANSWER_TEMPLATE;
+			style = INCORRECT_ANSWER_STYLE;
+			break;
+	}
+	switch (type) {
+		case RADIO_TYPE:
+			let radioLabels = question.querySelectorAll("label");
+			for (let label of radioLabels) {
+				let radio = label.children[0];
+				if (radio.value == answer) {
+					label.style.cssText = style;
+					radio.click();
+					break;
+				}
+			}
+			break;
+		case TEXT_TYPE:
+		case TEXT_TYPE2:
+			let hint = question.querySelector(".hint");
+			hint.innerHTML += format(template, [answer]);
+			break;
+		case CONNECTPAIRS_TYPE:
+			let i = 1;
+			for (let fItemId in answer) {
+				let fItem = question.querySelector(".qt_connect_item[id='"+fItemId+"']");
+				let sItem = question.querySelector(".qt_connect_item[id='"+answer[fItemId]+"']");
+				setTimeout(()=> {
+					fItem.click();
+				}, 250*i)
+				setTimeout(()=> {
+					sItem.click();
+				}, 250*i)
+				fItem.innerHTML += format(template, [i-1]);
+				sItem.innerHTML += format(template, [i-1]);
+				i++;
+			} 
+			break;
+		case CHECKS_TYPE:
+			let checkLabels = question.querySelectorAll("label");
+			let j = 1;
+			for (let label of checkLabels) {
+				let check = label.children[0];
+				if (answer.includes(check.value)) {
+					if (!check.checked)  {
+						setTimeout(()=>check.click(), j*250)
+						j++;
+					};
+					label.style.cssText = style;
+				}
+			}
+			break;
+		case ORDER_TYPE:
+			let sorts =  question.querySelectorAll(".ui-sortable-handle");
+			for (let sort of sorts) {
+				let index = answer.indexOf(sort.dataset.id);
+				if (index != -1) {
+					sort.innerHTML += format(template, [index]);;
+				}
+			}
+			break;
+		default:
+			console.log("Такой тип вопроса не учтен...");
+			break;
+	}	
 }
