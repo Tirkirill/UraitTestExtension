@@ -10,8 +10,19 @@
     <div class="panel">
         <input type="file" id="answerJSON" name="answerJSON" accept=".txt" style="display:none">
         <button id="load_file__button">Загрузить файл</button>
+        <p class="hint-text"></p>
+        <div class="safe-regimes">
+            <div><span class="hint-text" title="Безопасный режим означает, что расширение будет только подсвечивать правильные ответы, но не пытаться выбрать их за вас">Безопасный режим</span> для:</div>
+            <label for="safe-for-radio">переключателей</label>
+            <input type="checkbox" id="safe-for-radio" value="1">
+            <label for="safe-for-checks">флажков</label>
+            <input type="checkbox" id="safe-for-checks" value="2">
+            <label for="safe-for-pairs">соединения пар</label>
+            <input type="checkbox" id="safe-for-pairs" value="7">
+        </div>
         <button id="solve_test__button">Решить тест по файлу<br><span class="file_name">Файл не загружен</span></button>
-        <button id="append_test__button">Дополнить файл<br><span class="file_name">Файл не загружен</span></button>
+        <button id="append_test__button" title="Добавляет в старый отчет новые ответы: все для вопросов с переключателями, 
+        вводом, выбором из списка и правильные для всех остальных">Дополнить файл<br><span class="file_name">Файл не загружен</span></button>
     </div>
     <script type="text/javascript" src="popup.js"></script>
 </body>

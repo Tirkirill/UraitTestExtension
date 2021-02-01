@@ -5,7 +5,7 @@ const TEXT_TYPE2 = 3;
 const ORDER_TYPE = 9;
 const CHECKS_TYPE = 2;
 const SELECT_TYPE = 8;
-//DRAG_TYPE = по группам распределение
+//DRAG_TYPE = распределение по группам
 const DRAG_TYPE = 5;
 
 const RIGHT_ANSWER_STYLE = 'color:green; font-size:16px; font-weight: bold';
@@ -23,10 +23,9 @@ window.onload = function() {
 				createFile(sendResponse);
 				break;
 			case "solve":
-				solveTest(sendResponse, req.answerJSON);
+				solveTest(sendResponse, req.answerJSON, req.safeRegimes);
 				break;
 			case "append":
-				alert("HI!");
 				appendTest(sendResponse, req.answerJSON);
 				break;
 		}
@@ -46,33 +45,27 @@ function createFile(sendResponse) {
 	sendResponse(res);
 }
 
-function solveTest(sendResponse, answerJSON) {
+function solveTest(sendResponse, answerJSON, safeRegimes) {
 	var report = JSON.parse(answerJSON);
 	var questions = document.querySelectorAll(".question");
 	for (let question of questions) {
 		let questionId = question.dataset.id;
 		let currentQuestion;
-		for (let reportQuestion of report["questions"]) {
-			if (reportQuestion.id == questionId) {
-				currentQuestion = reportQuestion;
-				break;
-			}
-		}	
+		currentQuestion = report["questions"].find((reportQuestion)=>reportQuestion.id == questionId)	
 		let type = currentQuestion.type;
 		let answer;
 		if (currentQuestion.correctAnswer) {
 			answer = currentQuestion.correctAnswer;
-			setInputs(currentQuestion.type, answer, true, question);
+			setInputs(currentQuestion.type, answer, true, question, safeRegimes);
 		}
 		else {
 			for (let incorrect_answer of currentQuestion.incorrectAnswers) {
-				let correct;
 				switch (currentQuestion.type) {
 					case RADIO_TYPE:
 					case TEXT_TYPE:
 					case TEXT_TYPE2:
 					case SELECT_TYPE:
-						setInputs(type, incorrect_answer, false, question);
+						setInputs(type, incorrect_answer, false, question, safeRegimes);
 						break;
 				}
 			}
@@ -85,7 +78,7 @@ function format(str, params) {
 	return str.replace(/\{(\w+)\}/g, function(a,b) { return params[b]});
 }
 
-function setInputs(type, answer, isCorrect, question) {
+function setInputs(type, answer, isCorrect, question, safeRegimes) {
 	let template;
 	let style;
 	let hint;
@@ -104,7 +97,10 @@ function setInputs(type, answer, isCorrect, question) {
 				let radio = label.children[0];
 				if (radio.value == answer) {
 					label.style.cssText = style;
-					if (correct) radio.click();
+					console.log(safeRegimes);
+					console.log(String(type));
+					console.log(safeRegimes.indexOf(String(type)));
+					if (isCorrect && safeRegimes.indexOf(String(type))==-1) radio.click();
 					break;
 				}
 			}
@@ -112,7 +108,7 @@ function setInputs(type, answer, isCorrect, question) {
 		case TEXT_TYPE:
 		case TEXT_TYPE2:
 			hint = question.querySelector(".hint");
-			hint.innerHTML += format(template, [answer]);
+			hint.innerHTML += format(template, [" "+answer+"<br>"]);
 			break;
 		case CONNECTPAIRS_TYPE:
 			let i = 1;
@@ -121,13 +117,13 @@ function setInputs(type, answer, isCorrect, question) {
 				let sItem = question.querySelector(".qt_connect_item[id='"+answer[fItemId]+"']");
 				fItem.innerHTML += format(template, [i-1]);
 				sItem.innerHTML += format(template, [i-1]);
-				if (correct) {
+				if (isCorrect && safeRegimes.indexOf(String(type))==-1) {
 					setTimeout(()=> {
 						fItem.click();
-					}, 250*i)
+					}, 500*i)
 					setTimeout(()=> {
 						sItem.click();
-					}, 250*i)
+					}, 500*i)
 					i++;
 				}
 			} 
@@ -138,9 +134,9 @@ function setInputs(type, answer, isCorrect, question) {
 			for (let label of checkLabels) {
 				let check = label.children[0];
 				if (answer.includes(check.value)) {
-					if (correct) {
+					if (isCorrect && safeRegimes.indexOf(String(type))==-1) {
 						if (!check.checked)  {
-							setTimeout(()=>check.click(), j*250)
+							setTimeout(()=>check.click(), j*500)
 							j++;
 						};
 					}
@@ -166,12 +162,8 @@ function setInputs(type, answer, isCorrect, question) {
 			break;
 		case SELECT_TYPE:
 			let answerOption = question.querySelector("option[value='"+answer+"']");
-			//проверить: вряд-ли это работает
-			if (correct) {
-				answerOption.selected = true;
-			}
 			hint = question.querySelector(".hint");
-			hint.innerHTML += format(template, " "+answerOption.textContent);
+			hint.innerHTML += format(template, [" "+answerOption.textContent + "<br>"]);
 			break;
 		default:
 			console.log("Такой тип вопроса не учтен...");
@@ -264,12 +256,13 @@ function getTestRes() {
 //Порядок важен для ORDER_TYPE
 //Для CONNECTPAIRS_TYPE и DRAG_TYPE важны сочетания
 function appendTest(sendResponse, answerJSON) {
-	var oldReport = JSON.parse(answerJSON).questions; 
+	var oldReport = JSON.parse(answerJSON);
+	var oldReportQuestions = oldReport.questions; 
 	var newReport = getTestRes().questions;
-	for (let oldInfo of oldReport) {
+	for (let oldInfo of oldReportQuestions) {
 		if (oldInfo.correctAnswer) continue;
-		let id = question.id;
-		let newInfo = newReport.find((question)=>question.id = id);
+		let id = oldInfo.id;
+		let newInfo = newReport.find(question => question.id == id);
 		if (newInfo.correctAnswer) oldInfo.correctAnswer = newInfo.correctAnswer;
 		else {
 			let newIncorrect = newInfo.incorrectAnswers[0];
@@ -298,5 +291,5 @@ function appendTest(sendResponse, answerJSON) {
 			}
 		}
 	}
-	sendResponse({...oldInfo, "OK":true});
+	sendResponse(oldReport);
 }

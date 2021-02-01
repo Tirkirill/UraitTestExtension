@@ -1,5 +1,5 @@
 .panel {
-    margin-bottom:20px;
+    margin-bottom:10px;
 }
 
 .panel * {
@@ -24,4 +24,15 @@
 
 .file_name {
     font-weight: bold;
+}
+
+.hint-text {
+    color: darkgray;
+    text-decoration: underline;
+}
+label {
+    float:left;
+}
+input[type="checkbox"] {
+    float:right;
 }
